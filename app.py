@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import joblib
+import sklearn  # Add this line!
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="Smart Insole AI Dashboard", page_icon="🦶", layout="wide")
