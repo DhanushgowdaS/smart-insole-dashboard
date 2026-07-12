@@ -26,9 +26,9 @@ The system uses a **Random Forest Classifier** to analyze pressure and temperatu
 ## ⚙️ Workflow
 
 ```text
-Pressure Sensors (5)
+Pressure Sensors 
         │
-Temperature Sensors (2)
+Temperature Sensors 
         │
         ▼
  Microcontroller
