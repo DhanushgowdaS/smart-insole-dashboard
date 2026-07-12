@@ -1,6 +1,7 @@
 #Hardware Components List
 ---
 -**Main Controller**: <u>ESP32 Development Board</u> (used for data processing and wireless communication).    
+
 -**Pressure Sensing**: 4x Force Sensing Resistors (FSR) for plantar pressure mapping.    
 -**Temperature Sensing**: Thermistor (or equivalent digital temperature sensor) for detecting inflammatory "hot spots."     
 -**Indicator System**: LEDs (for real-time visual status updates).    
