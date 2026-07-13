@@ -1,53 +1,49 @@
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
-import csv
-from datetime import datetime
-import os
+import sqlite3
 
 app = FastAPI()
 
-# Data model for incoming sensor data
-class SensorData(BaseModel):
-    fsr1: int
-    fsr2: int
-    fsr3: int
-    fsr4: int
-    temp1: float
-    temp2: float
+# Database setup
+DB_NAME = "sensor_data.db"
 
-DATA_FILE = "sensor_data.csv"
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    conn.execute("CREATE TABLE IF NOT EXISTS readings (id INTEGER PRIMARY KEY, fsr1 REAL, fsr2 REAL, fsr3 REAL, fsr4 REAL, temp1 REAL)")
+    conn.close()
+
+init_db()
+
+class SensorData(BaseModel):
+    fsr1: float
+    fsr2: float
+    fsr3: float
+    fsr4: float
+    temp1: float
 
 @app.post("/log")
-async def log_data(data: SensorData):
-    try:
-        # Check if file exists to determine if we need to write a header
-        file_exists = os.path.isfile(DATA_FILE)
-        
-        # Append data to the CSV file
-        with open(DATA_FILE, "a", newline="") as f:
-            writer = csv.writer(f)
-            
-            # Write header if it's a new file
-            if not file_exists:
-                writer.writerow(['timestamp', 'fsr1', 'fsr2', 'fsr3', 'fsr4', 'temp1', 'temp2'])
-            
-            # Write the sensor reading
-            writer.writerow([
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
-                data.fsr1, data.fsr2, data.fsr3, data.fsr4, 
-                data.temp1, data.temp2
-            ])
-            
-        print(f"DEBUG: Successfully saved data to {DATA_FILE}")
-        return {"status": "saved"}
-        
-    except Exception as e:
-        print(f"DEBUG: Error writing to file: {e}")
-        return {"status": "error", "detail": str(e)}
+def log_data(data: SensorData):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    # 1. Insert new data
+    cursor.execute("INSERT INTO readings (fsr1, fsr2, fsr3, fsr4, temp1) VALUES (?,?,?,?,?)",
+                   (data.fsr1, data.fsr2, data.fsr3, data.fsr4, data.temp1))
+    
+    # 2. Circular Buffer: Delete oldest records if we exceed 1000 total entries
+    cursor.execute("DELETE FROM readings WHERE id <= (SELECT MAX(id) - 1000 FROM readings)")
+    
+    conn.commit()
+    conn.close()
+    return {"status": "success"}
 
-@app.get("/download")
-async def download_data():
-    if os.path.exists(DATA_FILE):
-        return FileResponse(DATA_FILE, media_type='text/csv', filename='sensor_data_exported.csv')
-    return {"status": "error", "detail": "File not found"}
+@app.get("/data")
+def get_data():
+    conn = sqlite3.connect(DB_NAME)
+    # Only return the last 100 entries for the dashboard
+    cursor = conn.execute("SELECT * FROM readings ORDER BY id DESC LIMIT 100")
+    rows = cursor.fetchall()
+    conn.close()
+    
+    # Convert to list of dicts
+    data = [{"fsr1": r[1], "fsr2": r[2], "fsr3": r[3], "fsr4": r[4], "temp1": r[5]} for r in rows]
+    return data
