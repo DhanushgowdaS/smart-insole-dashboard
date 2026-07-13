@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
 import joblib
@@ -6,17 +6,23 @@ import os
 
 app = FastAPI()
 
-# Path to your database and ML model
 DB_NAME = "sensor_data.db"
-MODEL_PATH = "model.pkl" 
+# Use absolute path to ensure the model is found regardless of the working directory
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "model.pkl")
 
-# Load the ML model
-# If the file doesn't exist, this will raise an error on startup
-model = joblib.load(MODEL_PATH)
+# Safely load the ML model
+try:
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+    else:
+        model = None
+        print(f"Warning: Model file not found at {MODEL_PATH}")
+except Exception as e:
+    model = None
+    print(f"Error loading model: {e}")
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
-    # Added 'status' column to store ML results
     conn.execute("""CREATE TABLE IF NOT EXISTS readings (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     fsr1 REAL, fsr2 REAL, fsr3 REAL, fsr4 REAL, temp1 REAL, status TEXT)""")
@@ -34,26 +40,35 @@ class SensorData(BaseModel):
 
 @app.post("/log")
 def log_data(data: SensorData):
-    # 1. Prepare data for ML model
-    features = [[data.fsr1, data.fsr2, data.fsr3, data.fsr4, data.temp1]]
-    
-    # 2. ML Prediction (Assuming your model returns 0, 1, or 2)
-    prediction = model.predict(features)[0] 
-    status_map = {0: "Good", 1: "Normal", 2: "Critical"}
-    status = status_map.get(prediction, "Unknown")
-    
-    # 3. Save to Database
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO readings (fsr1, fsr2, fsr3, fsr4, temp1, status) VALUES (?,?,?,?,?,?)",
-                   (data.fsr1, data.fsr2, data.fsr3, data.fsr4, data.temp1, status))
-    
-    # Keep only the last 1000 entries
-    cursor.execute("DELETE FROM readings WHERE id <= (SELECT MAX(id) - 1000 FROM readings)")
-    
-    conn.commit()
-    conn.close()
-    return {"status": "success", "ml_result": status}
+    # ML Prediction with fallback
+    status = "Unknown"
+    if model:
+        try:
+            features = [[data.fsr1, data.fsr2, data.fsr3, data.fsr4, data.temp1]]
+            prediction = model.predict(features)[0]
+            status_map = {0: "Good", 1: "Normal", 2: "Critical"}
+            status = status_map.get(prediction, "Unknown")
+        except Exception as e:
+            print(f"ML Prediction error: {e}")
+            status = "Normal" # Default fallback
+    else:
+        status = "Normal" # Default if no model loaded
+
+    # Save to Database
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO readings (fsr1, fsr2, fsr3, fsr4, temp1, status) VALUES (?,?,?,?,?,?)",
+                       (data.fsr1, data.fsr2, data.fsr3, data.fsr4, data.temp1, status))
+        
+        # Keep only the last 1000 entries
+        cursor.execute("DELETE FROM readings WHERE id <= (SELECT MAX(id) - 1000 FROM readings)")
+        
+        conn.commit()
+        conn.close()
+        return {"status": "success", "ml_result": status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/data")
 def get_data():
