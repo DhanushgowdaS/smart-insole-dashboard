@@ -1,8 +1,8 @@
-# 👟 Smart Footwear for Early Detection of Foot/Leg Ulcers
+#  Smart Footwear for Early Detection of Foot/Leg Ulcers
 
 A wearable healthcare system designed to **detect the early signs of diabetic foot ulcers before visible wounds develop**. The project continuously monitors **foot pressure** and **skin temperature**, then uses **Machine Learning (Random Forest)** to identify abnormal patterns that may indicate a high risk of ulcer formation.
 
-## ✨ Features
+##  Features
 
 * Real-time foot pressure monitoring
 * Skin temperature monitoring
@@ -11,7 +11,7 @@ A wearable healthcare system designed to **detect the early signs of diabetic fo
 * Preventive healthcare approach
 * Low-power wearable design
 
-## 🛠 Hardware
+##  Hardware
 
 * Pressure Sensors
 * Temperature Sensors
@@ -19,11 +19,11 @@ A wearable healthcare system designed to **detect the early signs of diabetic fo
 * Smart Insole
 * Rechargeable Battery
 
-## 🤖 Machine Learning
+##  Machine Learning
 
 The system uses a **Random Forest Classifier** to analyze pressure and temperature data collected from the sensors. It learns normal foot conditions and predicts the risk of ulcer formation when abnormal pressure distribution and localized temperature increases are detected.
 
-## ⚙️ Workflow
+##  Workflow
 
 ```text
 Pressure Sensors 
@@ -49,7 +49,7 @@ Temperature Sensors
  User Alert
 ```
 
-## 📂 Repository Structure
+##  Repository Structure
 
 ```text
 Smart-Footwear-Ulcer-Detection/
@@ -61,7 +61,7 @@ Smart-Footwear-Ulcer-Detection/
 └── README.md
 ```
 
-## 🎯 Applications
+##  Applications
 
 * Diabetic Foot Monitoring
 * Preventive Healthcare
@@ -69,7 +69,7 @@ Smart-Footwear-Ulcer-Detection/
 * Hospitals & Clinics
 * Elderly Patient Care
 
-## 🚀 Future Enhancements
+##  Future Enhancements
 
 * Bluetooth Low Energy (BLE)
 * Mobile Application
@@ -78,9 +78,9 @@ Smart-Footwear-Ulcer-Detection/
 * Gait Analysis
 * Doctor Dashboard
 
-## 📌 Status
+##  Status
 
-🚧 **Project Under Development**
+ **Project Under Development**
 
 ## 👨‍💻 Author
 
