@@ -1,34 +1,37 @@
-from fastapi import FastAPI, Request
-import csv
-from datetime import datetime
-import joblib
+from fastapi import FastAPI
+from pydantic import BaseModel
 import pandas as pd
+import joblib
 
+# Initialize FastAPI
 app = FastAPI()
 
-# Load your ML model once when the server starts
-model = joblib.load("model.pkl")
+# 1. Define the data structure to match the ESP32 JSON
+class SensorData(BaseModel):
+    fsr1: int
+    fsr2: int
+    fsr3: int
+    fsr4: int
+    temp1: float
+    temp2: float
 
+# 2. Load your pre-trained ML model (ensure 'model.pkl' is in your repo)
+# model = joblib.load('model.pkl') 
+
+@app.get("/")
+def read_root():
+    return {"message": "Smart Footwear API is running!"}
+
+# 3. Endpoint for ESP32 to send data
 @app.post("/log")
-async def log_sensor_data(request: Request):
-    data = await request.json()
-    pressure = data.get("pressure")
-    temp = data.get("temp")
+async def log_data(data: SensorData):
+    # Here you can process the data
+    print(f"Received FSR Data: {data.fsr1}, {data.fsr2}, {data.fsr3}, {data.fsr4}")
+    print(f"Received Temp Data: {data.temp1}, {data.temp2}")
     
-    # 1. Save the data to your CSV
-    with open("daily_log.csv", "a", newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), pressure, temp])
+    # Example: If you have your ML model ready:
+    # input_features = [[data.fsr1, data.fsr2, data.fsr3, data.fsr4, data.temp1, data.temp2]]
+    # prediction = model.predict(input_features)
     
-    # 2. Prepare data for the model
-    # Ensure the column names match what your model was trained on
-    input_data = pd.DataFrame([[pressure, temp]], columns=['pressure', 'temp'])
-    
-    # 3. Get prediction
-    prediction = model.predict(input_data)
-    
-    # 4. Return both the success status and the prediction result
-    return {
-        "status": "success", 
-        "prediction": int(prediction[0])
-    }
+    # For now, returning a sample prediction
+    return {"status": "success", "prediction": 0}
