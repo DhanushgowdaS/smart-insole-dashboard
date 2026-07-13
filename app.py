@@ -3,58 +3,47 @@ import pandas as pd
 import requests
 import time
 
-# --- CONFIGURATION ---
 API_URL = "https://smart-footwear-api.onrender.com/data"
 
+# Set wide layout
 st.set_page_config(page_title="Smart Footwear Dashboard", layout="wide")
-st.title("🥾 Smart Footwear: Real-Time Monitoring")
 
-# --- DASHBOARD LAYOUT ---
+# Use a clean header with a divider
+st.title("🥾 Smart Footwear Dashboard")
+st.markdown("---")
+
 placeholder = st.empty()
 
 while True:
     try:
-        # Request data from backend
         response = requests.get(API_URL, timeout=10)
-        
-        with placeholder.container():
-            if response.status_code == 200:
-                data = response.json()
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                df = pd.DataFrame(data)
                 
-                # Check if data is valid and not empty
-                if isinstance(data, list) and len(data) > 0:
-                    df = pd.DataFrame(data)
+                with placeholder.container():
+                    # Create two main rows
+                    row1 = st.columns(2)
                     
-                    # Ensure required columns exist before plotting
-                    fsr_cols = ['fsr1', 'fsr2', 'fsr3', 'fsr4']
-                    available_fsr = [c for c in fsr_cols if c in df.columns]
+                    with row1[0]:
+                        st.subheader("Pressure Analysis")
+                        st.line_chart(df[['fsr1', 'fsr2', 'fsr3', 'fsr4']])
                     
-                    col1, col2 = st.columns(2)
+                    with row1[1]:
+                        st.subheader("Temperature")
+                        st.line_chart(df[['temp1']])
                     
-                    with col1:
-                        st.subheader("Pressure Trend (FSRs)")
-                        if available_fsr:
-                            st.line_chart(df[available_fsr])
-                        else:
-                            st.write("FSR data not available.")
-                            
-                    with col2:
-                        st.subheader("Temperature Trend")
-                        if 'temp1' in df.columns:
-                            st.line_chart(df[['temp1']])
-                        else:
-                            st.write("Temperature data not available.")
-                    
-                    st.subheader("Latest Entries")
-                    st.dataframe(df.head(10))
-                else:
-                    st.warning("Database is empty. Waiting for ESP32 data...")
+                    st.markdown("### Recent Sensor Readings")
+                    # Display the dataframe with a cleaner, striped look
+                    st.dataframe(df.tail(10), use_container_width=True)
             else:
-                st.error(f"Backend API Error: {response.status_code}")
-                
+                st.info("No data yet. Waiting for ESP32...")
+        else:
+            st.error("Backend unreachable.")
     except Exception as e:
-        st.error(f"Connection issue: {e}")
-        st.write("Check if your backend is running at: ", API_URL)
+        st.error(f"Connection error: {e}")
     
-    time.sleep(5) # Refresh interval
+    # 10-second refresh delay
+    time.sleep(10)
     st.rerun()
