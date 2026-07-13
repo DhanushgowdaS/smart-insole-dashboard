@@ -7,9 +7,27 @@ API_URL = "https://smart-footwear-api.onrender.com/data"
 st.set_page_config(page_title="Smart Footwear Dashboard", layout="wide")
 st.title("🥾 Smart Footwear: Real-Time Monitoring")
 
+
 # Manual Refresh Button
 if st.button("Refresh Live Data"):
     st.rerun()
+
+# --- STATUS CLASSIFICATION ---
+            def get_status(row):
+                # If any FSR reading is above 2000, mark as Critical
+                if row[['fsr1', 'fsr2', 'fsr3', 'fsr4']].max() > 2000:
+                    return "🔴 Critical"
+                elif row[['fsr1', 'fsr2', 'fsr3', 'fsr4']].max() > 1000:
+                    return "🟡 Normal"
+                else:
+                    return "🟢 Good"
+
+            # Create the status column
+            df['Status'] = df.apply(get_status, axis=1)
+
+            # Display with the status
+            st.subheader("Latest Entries & Status")
+            st.dataframe(df.tail(10), use_container_width=True)
 
 # --- DATA FETCHING ---
 try:
