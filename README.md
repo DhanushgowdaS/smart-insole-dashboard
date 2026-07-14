@@ -82,6 +82,3 @@ Smart-Footwear-Ulcer-Detection/
 
  **Project Under Development**
 
-## 👨‍💻 Author
-
-**Dhanush S**
