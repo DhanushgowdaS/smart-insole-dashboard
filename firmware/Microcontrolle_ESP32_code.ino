@@ -1,4 +1,4 @@
-'''cpp
+
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
@@ -73,4 +73,4 @@ void sendData(float f1, float f2, float f3, float f4, float t1) {
   if (httpResponseCode > 0) Serial.println("Server Response: " + String(httpResponseCode));
   http.end();
 }
-'''
+
